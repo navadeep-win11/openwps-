@@ -7,14 +7,16 @@ import Superscript from '@tiptap/extension-superscript';
 import Subscript from '@tiptap/extension-subscript';
 import TextStyle from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
-import { Bold, Italic, Underline as UnderlineIcon, Strikethrough, AlignLeft, AlignCenter, AlignRight, AlignJustify, List, ListOrdered, Subscript as SubscriptIcon, Superscript as SuperscriptIcon, Type } from 'lucide-react';
+import Image from '@tiptap/extension-image';
+import { Bold, Italic, Underline as UnderlineIcon, Strikethrough, AlignLeft, AlignCenter, AlignRight, AlignJustify, List, ListOrdered, Subscript as SubscriptIcon, Superscript as SuperscriptIcon, Type, ImageIcon, Download } from 'lucide-react';
 
 const MenuBar = ({ editor }: { editor: any }) => {
   if (!editor) return null;
 
-  const Button = ({ onClick, isActive = false, children }: any) => (
+  const Button = ({ onClick, isActive = false, children, title }: any) => (
     <button
       onClick={onClick}
+      title={title}
       className={`p-1.5 rounded-lg transition-colors flex items-center justify-center
         ${isActive ? 'bg-indigo-500 text-white' : 'hover:bg-white/10 text-white/80'}
       `}
@@ -23,19 +25,37 @@ const MenuBar = ({ editor }: { editor: any }) => {
     </button>
   );
 
+  const addImage = () => {
+    const url = window.prompt('Enter Image URL');
+    if (url) {
+      editor.chain().focus().setImage({ src: url }).run();
+    }
+  };
+
+  const exportHtml = () => {
+    const html = editor.getHTML();
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'document.html';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="flex flex-wrap gap-1 p-2 bg-black/40 backdrop-blur-md border-b border-white/10 sticky top-0 z-10 w-full rounded-t-2xl">
       <div className="flex items-center gap-1 border-r border-white/20 pr-2 mr-1">
-        <Button onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')}>
+        <Button onClick={() => editor.chain().focus().toggleBold().run()} isActive={editor.isActive('bold')} title="Bold">
           <Bold className="w-4 h-4" />
         </Button>
-        <Button onClick={() => editor.chain().focus().toggleItalic().run()} isActive={editor.isActive('italic')}>
+        <Button onClick={() => editor.chain().focus().toggleItalic().run()} isActive={editor.isActive('italic')} title="Italic">
           <Italic className="w-4 h-4" />
         </Button>
-        <Button onClick={() => editor.chain().focus().toggleUnderline().run()} isActive={editor.isActive('underline')}>
+        <Button onClick={() => editor.chain().focus().toggleUnderline().run()} isActive={editor.isActive('underline')} title="Underline">
           <UnderlineIcon className="w-4 h-4" />
         </Button>
-        <Button onClick={() => editor.chain().focus().toggleStrike().run()} isActive={editor.isActive('strike')}>
+        <Button onClick={() => editor.chain().focus().toggleStrike().run()} isActive={editor.isActive('strike')} title="Strikethrough">
           <Strikethrough className="w-4 h-4" />
         </Button>
       </div>
@@ -64,12 +84,15 @@ const MenuBar = ({ editor }: { editor: any }) => {
         </Button>
       </div>
 
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 border-r border-white/20 pr-2 mr-1">
         <Button onClick={() => editor.chain().focus().toggleSubscript().run()} isActive={editor.isActive('subscript')}>
           <SubscriptIcon className="w-4 h-4" />
         </Button>
         <Button onClick={() => editor.chain().focus().toggleSuperscript().run()} isActive={editor.isActive('superscript')}>
           <SuperscriptIcon className="w-4 h-4" />
+        </Button>
+        <Button onClick={addImage} title="Insert Image">
+          <ImageIcon className="w-4 h-4" />
         </Button>
         
         {/* Simple color picker integration */}
@@ -80,9 +103,15 @@ const MenuBar = ({ editor }: { editor: any }) => {
             onInput={(event: any) => editor.chain().focus().setColor(event.target.value).run()}
             value={editor.getAttributes('textStyle').color || '#000000'}
             className="w-7 h-7 opacity-0 cursor-pointer"
+            title="Text Color"
           />
         </div>
       </div>
+      
+      <div className="flex-1" />
+      <button onClick={exportHtml} className="flex items-center gap-2 px-3 py-1 bg-indigo-500 hover:bg-indigo-600 rounded-lg text-white text-xs font-bold shadow-lg transition-colors">
+        <Download className="w-3 h-3" /> Save HTML
+      </button>
     </div>
   );
 };
@@ -96,6 +125,7 @@ export default function DocumentEditor() {
       Subscript,
       TextStyle,
       Color,
+      Image,
       TextAlign.configure({
         types: ['heading', 'paragraph'],
       }),

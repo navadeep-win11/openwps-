@@ -55,11 +55,29 @@ export default function Presentation() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isFullscreen, slides.length]);
 
-  const addSlide = () => {
+  const addSlide = (template: 'blank' | 'title' | 'two-column' = 'blank') => {
+    let elements: Element[] = [];
+    const baseId = Date.now();
+    
+    if (template === 'blank') {
+      elements = [{ id: `el-${baseId}`, type: 'text', content: 'New Slide', x: 200, y: 150, w: 400, h: 80 }];
+    } else if (template === 'title') {
+      elements = [
+        { id: `el-${baseId}-1`, type: 'text', content: '<div style="text-align: center; font-size: 64px;">Slide Title</div>', x: 100, y: 150, w: 600, h: 100 },
+        { id: `el-${baseId}-2`, type: 'text', content: '<div style="text-align: center; font-size: 24px; color: gray;">Subtitle here</div>', x: 100, y: 270, w: 600, h: 60 }
+      ];
+    } else if (template === 'two-column') {
+      elements = [
+        { id: `el-${baseId}-1`, type: 'text', content: '<div style="font-size: 40px; border-bottom: 2px solid black;">Header</div>', x: 50, y: 30, w: 700, h: 60 },
+        { id: `el-${baseId}-2`, type: 'text', content: '<ul><li>Point 1</li><li>Point 2</li></ul>', x: 50, y: 120, w: 320, h: 250 },
+        { id: `el-${baseId}-3`, type: 'text', content: '<ul><li>Point A</li><li>Point B</li></ul>', x: 400, y: 120, w: 320, h: 250 }
+      ];
+    }
+
     const newSlide: Slide = {
-      id: `slide-${Date.now()}`,
+      id: `slide-${baseId}`,
       background: '#ffffff',
-      elements: [{ id: `el-${Date.now()}`, type: 'text', content: 'New Slide', x: 200, y: 150, w: 400, h: 80 }]
+      elements
     };
     setSlides([...slides, newSlide]);
     setCurrentSlideIndex(slides.length);
@@ -135,9 +153,18 @@ export default function Presentation() {
     <div className="w-full flex h-[80vh] bg-black/20 rounded-3xl overflow-hidden border border-white/20 shadow-inner text-white">
       {/* Sidebar */}
       <div className="w-48 sm:w-64 border-r border-white/10 bg-black/40 flex flex-col">
-        <div className="p-3 border-b border-white/10 flex justify-between items-center">
-          <span className="font-semibold text-sm">Slides</span>
-          <button onClick={addSlide} className="p-1.5 bg-indigo-500 hover:bg-indigo-600 rounded-lg transition-colors"><Plus className="w-4 h-4" /></button>
+        <div className="p-3 border-b border-white/10 flex flex-col gap-2">
+          <div className="flex justify-between items-center">
+            <span className="font-semibold text-sm">Slides</span>
+            <div className="relative group">
+              <button className="p-1.5 bg-indigo-500 hover:bg-indigo-600 rounded-lg transition-colors"><Plus className="w-4 h-4" /></button>
+              <div className="absolute top-full left-0 mt-1 bg-gray-800 rounded shadow-lg p-1 opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity z-50 flex flex-col gap-1 w-32">
+                <button onClick={() => addSlide('blank')} className="text-xs p-1.5 hover:bg-white/10 rounded text-left">Blank Slide</button>
+                <button onClick={() => addSlide('title')} className="text-xs p-1.5 hover:bg-white/10 rounded text-left">Title Slide</button>
+                <button onClick={() => addSlide('two-column')} className="text-xs p-1.5 hover:bg-white/10 rounded text-left">Two Column</button>
+              </div>
+            </div>
+          </div>
         </div>
         <div className="flex-1 overflow-y-auto p-2 space-y-2">
           {slides.map((slide, idx) => (
