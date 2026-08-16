@@ -7,6 +7,7 @@ import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 import DocumentEditor from './Editor';
 import Spreadsheet from './Spreadsheet';
+import Presentation from './Presentation';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
@@ -106,7 +107,7 @@ export default function App() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // App Mode
-  const [activeTab, setActiveTab] = useState<'reader'|'writer'|'spreadsheet'>('reader');
+  const [activeTab, setActiveTab] = useState<'reader'|'writer'|'spreadsheet'|'presentation'>('reader');
 
   // Dual API Settings State
   const [showSettings, setShowSettings] = useState(false);
@@ -508,7 +509,7 @@ export default function App() {
           <div className="flex flex-col w-full mt-2">
             
             {/* Tabs */}
-            <div className="flex gap-2 p-1 bg-black/20 backdrop-blur-md rounded-2xl mb-6 w-full max-w-[600px] mx-auto border border-white/10 shadow-inner overflow-x-auto whitespace-nowrap">
+            <div className="flex gap-2 p-1 bg-black/20 backdrop-blur-md rounded-2xl mb-6 w-full max-w-[800px] mx-auto border border-white/10 shadow-inner overflow-x-auto whitespace-nowrap">
               <button 
                 onClick={() => setActiveTab('reader')}
                 className={`flex-1 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all min-w-[120px] ${activeTab === 'reader' ? 'bg-white/20 text-white shadow-md' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
@@ -527,12 +528,20 @@ export default function App() {
               >
                 Spreadsheet
               </button>
+              <button 
+                onClick={() => setActiveTab('presentation')}
+                className={`flex-1 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all min-w-[120px] ${activeTab === 'presentation' ? 'bg-orange-500/50 text-white shadow-md' : 'text-white/60 hover:text-white hover:bg-orange-500/20'}`}
+              >
+                Presentation
+              </button>
             </div>
 
             {activeTab === 'writer' ? (
               <DocumentEditor />
             ) : activeTab === 'spreadsheet' ? (
               <Spreadsheet />
+            ) : activeTab === 'presentation' ? (
+              <Presentation />
             ) : (
             <>
             <div className="mb-6 flex items-center h-[60px] gap-3">
