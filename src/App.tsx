@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { ArrowLeft, Search, X, Upload, FileText, ChevronLeft, ChevronRight, Settings, Sparkles } from 'lucide-react';
+import { Sparkles, Brain, Code, Image as ImageIcon, CheckCircle, FileText, X, ArrowLeft, Download, Upload, ChevronLeft, ChevronRight, Settings, MousePointer2, PenTool, Highlighter, Trash2, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import ReactMarkdown from 'react-markdown';
@@ -108,6 +108,12 @@ export default function App() {
   
   // App Mode
   const [activeTab, setActiveTab] = useState<'reader'|'writer'|'spreadsheet'|'presentation'>('reader');
+
+  // Annotation State
+  const [drawMode, setDrawMode] = useState<'none'|'pen'|'highlight'>('none');
+  const [annotations, setAnnotations] = useState<{type: 'pen'|'highlight', points: {x:number,y:number}[]}[]>([]);
+  const [currentPath, setCurrentPath] = useState<{x:number,y:number}[] | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Dual API Settings State
   const [showSettings, setShowSettings] = useState(false);
@@ -353,11 +359,43 @@ export default function App() {
     }
   };
 
-  const showTooltip = !!selectionText && !showSettings && activeTab === 'reader';
+  const showTooltip = !!selectionText && !showSettings && activeTab === 'reader' && drawMode === 'none';
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setNumPages(numPages);
-    setPageNumber(1);
+    setUiState('IDLE');
+  };
+
+  const downloadPdf = () => {
+    if (!pdfFile) return;
+    const url = URL.createObjectURL(pdfFile);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `edited_${pdfFile.name}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (drawMode === 'none') return;
+    e.preventDefault();
+    const rect = e.currentTarget.getBoundingClientRect();
+    setCurrentPath([{ x: e.clientX - rect.left, y: e.clientY - rect.top }]);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent) => {
+    if (drawMode === 'none' || !currentPath) return;
+    e.preventDefault();
+    const rect = e.currentTarget.getBoundingClientRect();
+    setCurrentPath([...currentPath, { x: e.clientX - rect.left, y: e.clientY - rect.top }]);
+  };
+
+  const handlePointerUp = () => {
+    if (drawMode === 'none' || !currentPath) return;
+    setAnnotations([...annotations, { type: drawMode, points: currentPath }]);
+    setCurrentPath(null);
   };
 
   const exportVocabToCSV = () => {
@@ -588,6 +626,29 @@ export default function App() {
                 </div>
               )}
             </div>
+            
+            {pdfFile && (
+              <div className="flex gap-2 p-2 bg-black/20 backdrop-blur-md rounded-2xl mb-4 w-full max-w-[600px] mx-auto border border-white/10 shadow-inner justify-center items-center">
+                <button onClick={() => setDrawMode('none')} className={`p-2 rounded-xl transition-all ${drawMode === 'none' ? 'bg-white/20 text-white' : 'text-white/60 hover:text-white'}`} title="Cursor (Select Text)">
+                  <MousePointer2 className="w-5 h-5" />
+                </button>
+                <div className="w-px h-6 bg-white/20 mx-1" />
+                <button onClick={() => setDrawMode('pen')} className={`p-2 rounded-xl transition-all ${drawMode === 'pen' ? 'bg-indigo-500 text-white' : 'text-white/60 hover:text-white'}`} title="Pen Tool">
+                  <PenTool className="w-5 h-5" />
+                </button>
+                <button onClick={() => setDrawMode('highlight')} className={`p-2 rounded-xl transition-all ${drawMode === 'highlight' ? 'bg-yellow-500 text-white' : 'text-white/60 hover:text-white'}`} title="Highlighter">
+                  <Highlighter className="w-5 h-5" />
+                </button>
+                <div className="w-px h-6 bg-white/20 mx-1" />
+                <button onClick={() => setAnnotations([])} className="p-2 rounded-xl text-white/60 hover:text-red-400 transition-all" title="Clear Annotations">
+                  <Trash2 className="w-5 h-5" />
+                </button>
+                <div className="flex-1" />
+                <button onClick={downloadPdf} className="flex items-center gap-2 px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-xl text-white text-sm font-semibold transition-all">
+                  <Download className="w-4 h-4" /> Export
+                </button>
+              </div>
+            )}
 
             {!pdfFile && (
                <div className="flex-1 min-h-[400px] bg-white/5 hover:bg-white/10 backdrop-blur-lg border border-white/20 border-dashed rounded-3xl flex flex-col items-center justify-center cursor-pointer transition-all shadow-xl"
@@ -609,7 +670,39 @@ export default function App() {
                   loading={<div className="p-12 text-center text-gray-500 font-medium animate-pulse">Loading Document...</div>}
                   className="max-w-full overflow-x-auto flex justify-center w-full"
                 >
-                  <Page key={`page_${pageNumber}`} pageNumber={pageNumber} renderTextLayer={true} renderAnnotationLayer={true} className="shadow-2xl rounded-lg overflow-hidden" scale={pdfScale} />
+                  <div className="relative inline-block" 
+                       style={{ touchAction: drawMode !== 'none' ? 'none' : 'auto' }}
+                       onPointerDown={handlePointerDown} 
+                       onPointerMove={handlePointerMove} 
+                       onPointerUp={handlePointerUp} 
+                       onPointerLeave={handlePointerUp}>
+                    <Page key={`page_${pageNumber}`} pageNumber={pageNumber} renderTextLayer={true} renderAnnotationLayer={true} className="shadow-2xl rounded-lg overflow-hidden" scale={pdfScale} />
+                    
+                    {/* Annotation Layer */}
+                    <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 50 }}>
+                       {annotations.map((ann, i) => (
+                         <polyline 
+                           key={i} 
+                           points={ann.points.map(p => `${p.x},${p.y}`).join(' ')} 
+                           fill="none" 
+                           stroke={ann.type === 'highlight' ? 'rgba(250, 204, 21, 0.4)' : 'rgba(99, 102, 241, 0.8)'} 
+                           strokeWidth={ann.type === 'highlight' ? 20 : 4} 
+                           strokeLinecap="round" 
+                           strokeLinejoin="round" 
+                         />
+                       ))}
+                       {currentPath && (
+                         <polyline 
+                           points={currentPath.map(p => `${p.x},${p.y}`).join(' ')} 
+                           fill="none" 
+                           stroke={drawMode === 'highlight' ? 'rgba(250, 204, 21, 0.4)' : 'rgba(99, 102, 241, 0.8)'} 
+                           strokeWidth={drawMode === 'highlight' ? 20 : 4} 
+                           strokeLinecap="round" 
+                           strokeLinejoin="round" 
+                         />
+                       )}
+                    </svg>
+                  </div>
                 </Document>
               </div>
             )}
