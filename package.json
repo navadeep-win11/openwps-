@@ -25,7 +25,8 @@
     "@tiptap/extension-superscript": "^2.10.3",
     "@tiptap/extension-subscript": "^2.10.3",
     "@tiptap/extension-color": "^2.10.3",
-    "@tiptap/extension-text-style": "^2.10.3"
+    "@tiptap/extension-text-style": "^2.10.3",
+    "@fortune-sheet/react": "^0.18.2"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
