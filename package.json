@@ -17,7 +17,15 @@
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
     "react-markdown": "^9.0.1",
-    "react-pdf": "^10.4.1"
+    "react-pdf": "^10.4.1",
+    "@tiptap/react": "^2.10.3",
+    "@tiptap/starter-kit": "^2.10.3",
+    "@tiptap/extension-text-align": "^2.10.3",
+    "@tiptap/extension-underline": "^2.10.3",
+    "@tiptap/extension-superscript": "^2.10.3",
+    "@tiptap/extension-subscript": "^2.10.3",
+    "@tiptap/extension-color": "^2.10.3",
+    "@tiptap/extension-text-style": "^2.10.3"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

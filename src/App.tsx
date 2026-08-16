@@ -5,6 +5,7 @@ import { Document, Page, pdfjs } from 'react-pdf';
 import ReactMarkdown from 'react-markdown';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
+import DocumentEditor from './Editor';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
@@ -102,6 +103,9 @@ export default function App() {
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [pdfScale, setPdfScale] = useState<number>(typeof window !== 'undefined' && window.innerWidth < 640 ? 0.8 : 1.2);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // App Mode
+  const [activeTab, setActiveTab] = useState<'reader'|'writer'>('reader');
 
   // Dual API Settings State
   const [showSettings, setShowSettings] = useState(false);
@@ -347,7 +351,7 @@ export default function App() {
     }
   };
 
-  const showTooltip = !!selectionText && !showSettings;
+  const showTooltip = !!selectionText && !showSettings && activeTab === 'reader';
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
     setNumPages(numPages);
@@ -486,16 +490,12 @@ export default function App() {
         {showWelcome ? (
           <div className="flex-1 flex flex-col justify-center gap-6 max-w-[600px] mx-auto w-full">
             <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white to-white/70">
-              peek-a-word
+              OpenWPS (peek-a-word)
             </h1>
             <p className="text-xl leading-relaxed font-medium text-white/80">
-              Enjoy an interactive reading experience. Upload a PDF, then highlight any word to get an instant definition with contextual images.
+              The open-source alternative for interactive reading and writing. Upload a PDF or create a document.
             </p>
             
-            <div className="w-full h-[100px] bg-white/5 backdrop-blur-sm border border-white/10 flex items-center justify-center rounded-2xl my-2 shadow-inner">
-               <span className="text-sm font-medium text-white/40 tracking-wide uppercase">Advertisement Placement</span>
-            </div>
-
             <button 
               onClick={handleEnterClick}
               className="w-full h-[60px] bg-white/10 hover:bg-white/20 backdrop-blur-xl border border-white/20 text-white font-semibold text-lg rounded-2xl transition-all shadow-[0_8px_32px_rgba(0,0,0,0.2)] active:scale-[0.98] flex items-center justify-center"
@@ -504,7 +504,28 @@ export default function App() {
             </button>
           </div>
         ) : (
-          <div className="flex flex-col w-full mt-8">
+          <div className="flex flex-col w-full mt-2">
+            
+            {/* Tabs */}
+            <div className="flex gap-2 p-1 bg-black/20 backdrop-blur-md rounded-2xl mb-6 w-full max-w-[400px] mx-auto border border-white/10 shadow-inner">
+              <button 
+                onClick={() => setActiveTab('reader')}
+                className={`flex-1 py-2.5 rounded-xl font-semibold text-sm transition-all ${activeTab === 'reader' ? 'bg-white/20 text-white shadow-md' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+              >
+                PDF Reader
+              </button>
+              <button 
+                onClick={() => setActiveTab('writer')}
+                className={`flex-1 py-2.5 rounded-xl font-semibold text-sm transition-all ${activeTab === 'writer' ? 'bg-white/20 text-white shadow-md' : 'text-white/60 hover:text-white hover:bg-white/5'}`}
+              >
+                WPS Writer Clone
+              </button>
+            </div>
+
+            {activeTab === 'writer' ? (
+              <DocumentEditor />
+            ) : (
+            <>
             <div className="mb-6 flex items-center h-[60px] gap-3">
               <button
                 onClick={() => {
@@ -573,6 +594,8 @@ export default function App() {
                   <Page key={`page_${pageNumber}`} pageNumber={pageNumber} renderTextLayer={true} renderAnnotationLayer={true} className="shadow-2xl rounded-lg overflow-hidden" scale={pdfScale} />
                 </Document>
               </div>
+            )}
+            </>
             )}
           </div>
         )}
