@@ -1,0 +1,36 @@
+@import url('https://fonts.googleapis.com/css2?family=Special+Elite&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Special Elite", ui-sans-serif, system-ui, sans-serif;
+  --color-primary-text: #333333;
+}
+
+body {
+  background-color: #FFFFFF;
+}
+
+@keyframes blink-cursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.animate-blink-cursor {
+  animation: blink-cursor 1.06s steps(1) infinite;
+}
+
+/* Native selection styling works best for PDFs. 
+   Custom styles for standard text can be scoped if needed, but for react-pdf 
+   we want the default transparent blue selection to keep the canvas visible. */
+
+/* Reset typography for react-pdf TextLayer to prevent selection misalignment */
+.react-pdf__Page__textContent {
+  line-height: 1 !important;
+  letter-spacing: normal !important;
+}
+
+.react-pdf__Page__textContent > span {
+  line-height: 1 !important;
+  letter-spacing: normal !important;
+  color: transparent !important;
+}
